@@ -1,0 +1,36 @@
+#!/bin/sh
+# Pre-commit hook for linting Rust code
+echo "🔍 Running pre-commit linting..."
+
+# Run rustfmt
+echo "📐 Checking code formatting..."
+cargo fmt --all -- --check
+if [ $? -ne 0 ]; then
+    echo "❌ Code formatting check failed. Run 'cargo fmt' to fix."
+    exit 1
+fi
+
+# Run clippy
+echo "🦀 Running clippy lints..."
+cargo clippy -- -D warnings
+if [ $? -ne 0 ]; then
+    echo "❌ Clippy check failed. Please fix the warnings."
+    exit 1
+fi
+
+# Validate commit message format
+commit_msg_file=".git/COMMIT_EDITMSG"
+if [ -f "$commit_msg_file" ]; then
+  commit_msg=$(cat "$commit_msg_file")
+  
+  # Check if the commit message follows the pattern
+  if ! echo "$commit_msg" | grep -qE "^:[a-z_]+: (feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([a-z0-9_-]+\))?(!)?: "; then
+    echo "❌ Commit message doesn't follow the Gitmoji Conventional Commits format."
+    echo "Example: :sparkles: feat(auth): add login functionality"
+    echo "See .github/commit-template.txt for details"
+    exit 1
+  fi
+fi
+
+echo "✅ Pre-commit checks passed!"
+exit 0

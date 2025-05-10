@@ -1,0 +1,9 @@
+[alias]
+# Set up development environment
+setup-dev = "run --manifest-path .cargo/setup-dev/Cargo.toml"
+
+# Development aliases
+dev = "watch -x run"
+test-watch = "watch -x test"
+lint = "clippy -- -D warnings"
+format = "fmt --all"

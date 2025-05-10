@@ -1,0 +1,15 @@
+# Ignore Rust and Cargo build directories
+target/
+
+# Ignore Node.js dependencies (if any)
+node_modules/
+
+# Ignore editor-specific files
+.vscode/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore crash dumps and other generated files
+*.dmp

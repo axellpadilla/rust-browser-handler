@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build release binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+
+      - name: Create portable package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path rust_browser_handler_portable/docs -Force
+          Copy-Item target/release/rust_browser_handler.exe rust_browser_handler_portable/
+          Copy-Item README.md rust_browser_handler_portable/docs/
+                   
+          # Create ZIP archive
+          Compress-Archive -Path rust_browser_handler_portable/* -DestinationPath rust_browser_handler_portable.zip
+
+      - name: Get version from tag
+        id: get_version
+        shell: bash
+
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Rust Browser Handler v${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          files: |
+            rust_browser_handler_portable.zip
+          body: |
+            # Rust Browser Handler v${{ steps.get_version.outputs.VERSION }}
+            
+            ## Installation
+            
+            ### Portable Version
+            1. Download the ZIP file
+            2. Extract to a permanent location
+            3. Execute `rust_browser_handler.exe` to add rules.
+            4. Use the `open-settings` command to set this .exe as the default handler.
