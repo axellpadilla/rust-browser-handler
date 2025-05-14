@@ -1,4 +1,4 @@
-# Browser Selector (Command-Line)
+# Rust Browser Handler (Command-Line)
 
 This project is a Rust-based command-line application that acts as a default browser handler for Windows. It allows users to intercept link clicks and apply rules to automatically open links in a specific browser or interactively select a browser.
 
@@ -8,6 +8,33 @@ This project is a Rust-based command-line application that acts as a default bro
 - **Rule-Based Automation:** Allows users to define rules based on URL patterns (substring or regular expressions) to automatically open links in a specific browser without manual intervention. Rules are stored in a `rules.json` file in the user's configuration directory.
 - **Interactive Browser Selection:** If no rule matches an intercepted URL, the application presents a list of detected browsers and prompts the user to select one. The user can also choose to save this selection as a new rule for the URL's domain.
 - **Command-Line Interface (CLI):** Provides a non-graphical interface for managing browser selection rules and preferences. Can be used via subcommands or an interactive mode.
+
+## Rules File Format
+
+Rules are stored in a JSON file named `rules.json` in your user's configuration directory (e.g., `%APPDATA%\Roaming\RustBrowserHandler\rules.json` on Windows).
+
+Each rule is a JSON object with the following fields:
+
+- `pattern` (string): The substring or regular expression to match against URLs.
+- `browser` (string): The path or identifier of the browser to use.
+- `is_regex` (boolean, optional): If `true`, the `pattern` is treated as a regular expression. If omitted or `false`, the pattern is matched as a substring.
+
+**Example `rules.json`:**
+```json
+[
+  {
+    "pattern": "work.com",
+    "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  },
+  {
+    "pattern": ".*\\.internal\\.net",
+    "browser": "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+    "is_regex": true
+  }
+]
+```
+
+If `is_regex` is not specified, the rule defaults to substring matching.
 
 ## Usage
 
@@ -40,7 +67,7 @@ Alternatively, you can run the executable without arguments to enter interactive
 
 ### Rule Management
 
-Rules are stored in a `rules.json` file in your user's configuration directory (e.g., `%APPDATA%\Roaming\BrowserSelector\rules.json` on Windows).
+Rules are stored in a `rules.json` file in your user's configuration directory (e.g., `%APPDATA%\Roaming\RustBrowserHandler\rules.json` on Windows).
 
 You can manage rules using the command-line interface in two ways:
 
@@ -51,7 +78,7 @@ You can manage rules using the command-line interface in two ways:
     target\release\rust_browser_handler.exe add "work.com" "C:\Program Files\Google\Chrome\Application\chrome.exe"
 
     # Add a rule (regex match)
-    target\release\rust_browser_handler.exe add ".*\\.internal\\.net" "C:\Program Files\Mozilla Firefox\firefox.exe" --regex
+    target\release\rust_browser_handler.exe add ".*\.internal\.net" "C:\Program Files\Mozilla Firefox\firefox.exe" --regex
 
     # List all rules
     target\release\rust_browser_handler.exe list
@@ -142,3 +169,4 @@ This project uses Gitmoji Conventional Commits format. The commit template will 
 
 See `.github/commit-template.txt` for more details.
 
+```
