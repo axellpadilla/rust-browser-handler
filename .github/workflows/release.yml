@@ -61,5 +61,5 @@ jobs:
             ### Portable Version
             1. Download the ZIP file
             2. Extract to a permanent location
-            3. Execute `rust_browser_handler.exe` to add rules.
-            4. Use the `open-settings` command to set this .exe as the default handler.
+            3. Execute `rust_browser_handler.exe` to register as browser, add rules, and check all commands.
+            4. Use the `open-settings` command to set this .exe or registered as the default handler.
