@@ -214,7 +214,8 @@ fn handle_url_open(url: String) {
     };
     info!("Loaded rules: {:?}", rules);
 
-    let browsers = find_browsers();
+    let mut browsers = find_browsers();
+    browsers.sort();
     info!("Detected browsers: {:?}", browsers);
 
     let mut matched_browser_path: Option<String> = None;
@@ -267,6 +268,8 @@ fn handle_url_open(url: String) {
     } else {
         // No rule matched, present browser selection
         warn!("No rule matched for URL: {}", url);
+        #[cfg(windows)]
+        ensure_console_window();
         if browsers.is_empty() {
             error!("No browsers detected to open the URL.");
         } else {
@@ -324,7 +327,10 @@ fn handle_url_open(url: String) {
                                             }
                                         }
                                     } else {
-                                        warn!("Could not extract domain from URL: {}", url);
+                                        error!(
+                                            "Could not extract domain from URL to save rule: {}",
+                                            url
+                                        );
                                     }
                                 }
                             }
@@ -391,5 +397,20 @@ fn parse_interactive_command(input: &str) -> Result<Commands, &'static str> {
         "unregister" => Ok(Commands::Unregister),
         "open-settings" => Ok(Commands::OpenSettings),
         _ => Err("Unknown command. Type 'help' for commands."),
+    }
+}
+
+#[cfg(windows)]
+fn ensure_console_window() {
+    use winapi::um::wincon::GetConsoleWindow;
+    use winapi::um::winuser::{SW_SHOW, SetForegroundWindow, ShowWindow};
+
+    unsafe {
+        // Show and bring the console window to the foreground if it exists
+        let hwnd = GetConsoleWindow();
+        if !hwnd.is_null() {
+            ShowWindow(hwnd, SW_SHOW);
+            SetForegroundWindow(hwnd);
+        }
     }
 }

@@ -1,9 +1,31 @@
 use log::warn;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::env;
 use std::path::{Path, PathBuf};
 use winreg::{RegKey, enums::*};
 
+/// Mapping from executable file names to official browser names
+pub static BROWSER_NAME_MAP: std::sync::OnceLock<HashMap<&'static str, &'static str>> =
+    std::sync::OnceLock::new();
+
+pub fn get_browser_map() -> &'static HashMap<&'static str, &'static str> {
+    BROWSER_NAME_MAP.get_or_init(|| {
+        let mut m = HashMap::new();
+        m.insert("chrome.exe", "Google Chrome");
+        m.insert("firefox.exe", "Mozilla Firefox");
+        m.insert("msedge.exe", "Microsoft Edge");
+        m.insert("brave.exe", "Brave");
+        m.insert("opera.exe", "Opera");
+        m.insert("launcher.exe", "Opera"); // Opera's launcher
+        m.insert("vivaldi.exe", "Vivaldi");
+        m.insert("thorium.exe", "Thorium");
+        m.insert("librewolf.exe", "LibreWolf");
+        m.insert("waterfox.exe", "Waterfox");
+        m.insert("floorp.exe", "Floorp");
+        m
+    })
+}
 /// Helper function to extract executable path from a command string
 pub fn extract_executable_path_from_command(command: String) -> Option<String> {
     let trimmed_command = command.trim();
@@ -23,26 +45,31 @@ pub fn extract_executable_path_from_command(command: String) -> Option<String> {
 }
 
 /// Helper function to check if a path likely points to a browser executable
-fn is_browser_executable(path: &str) -> bool {
-    let lower_path = path.to_lowercase();
-    lower_path.contains("chrome.exe")
-        || lower_path.contains("firefox.exe")
-        || lower_path.contains("msedge.exe")
-        || lower_path.contains("brave.exe")
-        || lower_path.contains("opera.exe")
-        || lower_path.contains("vivaldi.exe")
-        || lower_path.contains("thorium.exe")
-        || lower_path.contains("librewolf.exe")
-        || lower_path.contains("waterfox.exe")
-        || lower_path.contains("floorp.exe")
+pub fn is_browser_executable(path: &str) -> bool {
+    let lower_path = path.to_ascii_lowercase();
+    // Only check the file name part
+    if let Some(file_name) = std::path::Path::new(&lower_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+    {
+        get_browser_map().contains_key(file_name)
+    } else {
+        false
+    }
 }
 
-/// Gets a displayable browser name from its path
+/// Gets a displayable browser name from its path using the official name if possible
 pub fn get_browser_name_from_path(path: &str) -> String {
     Path::new(path)
         .file_name()
         .and_then(|name| name.to_str())
-        .map(|name| name.to_string())
+        .and_then(|name| {
+            let lower = name.to_ascii_lowercase();
+            get_browser_map()
+                .get(lower.as_str())
+                .map(|s| s.to_string())
+                .or(Some(name.to_string()))
+        })
         .unwrap_or_else(|| path.to_string())
 }
 
@@ -249,12 +276,14 @@ mod tests {
     #[test]
     fn test_get_browser_name_from_path() {
         assert_eq!(
-            get_browser_name_from_path("C:\\Program Files\\Browser\\browser.exe"),
-            "browser.exe".to_string()
+            get_browser_name_from_path(
+                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            ),
+            "Google Chrome".to_string()
         );
         assert_eq!(
-            get_browser_name_from_path("/usr/bin/firefox"),
-            "firefox".to_string()
+            get_browser_name_from_path("C:\\Program Files\\Mozilla Firefox\\firefox.exe"),
+            "Mozilla Firefox".to_string()
         );
         assert_eq!(get_browser_name_from_path(""), "".to_string());
         assert_eq!(
